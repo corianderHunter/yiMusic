@@ -1,0 +1,18 @@
+{
+  "name": "yimusic",
+  "version": "1.0.0",
+  "description": "163music data cralwer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "corianderHunter",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "crawler": "^1.0.5",
+    "iconv-lite": "^0.4.18",
+    "jsdom": "^11.1.0",
+    "mysql": "^2.14.1"
+  }
+}
