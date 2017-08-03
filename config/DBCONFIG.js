@@ -4,7 +4,7 @@
 var mysql = require('mysql');
 var bluebird = require('bluebird');
 
-const host = 'localhost';
+const host = 'mydb.host';
 const port = 3306;
 
 var pool  = mysql.createPool({
@@ -14,6 +14,11 @@ var pool  = mysql.createPool({
     password        : 'root',
     database        : 'yiMusic'
 });
+
+pool.getConnection(function(err,con){
+     if(err) return console.log('数据库连接错误：'+err);
+     return console.log('数据库连接连接成功！');
+})
 
 var getConnect = bluebird.promisify(pool.getConnection);
 
