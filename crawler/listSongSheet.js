@@ -6,8 +6,14 @@ const connect = require('../config/DBCONFIG');
 const Promise_ = require('bluebird');
 const playList = require('../config/CRAWLER').playList;
 const Emitter = require('events');
+const fs = require('fs')
+const path = require('path');
+const config = require('../config')
+
 
 const emitter = new Emitter();
+
+let errorUri = [];
 
 
 connect.connect(err=>{
@@ -16,6 +22,7 @@ connect.connect(err=>{
 
 let crawler = new Crawler({
     maxConnections:10
+    //  rateLimit:1
 })
 
 var sql = 'select sourceId,name,`by`,created_at,updated_at from category'
@@ -39,7 +46,7 @@ query(sql).then((result)=>{
             uri:val.uri,
             callback:(err,res,done)=>{
                 function getpage($){
-                    let $dom = $('.zpgi')
+                    let $dom = $('#m-pl-pager').children('.u-page').children('.zpgi')
                     let page = $dom.eq($dom.length-1).text();
                     return page-0;
                 }
@@ -58,17 +65,34 @@ query(sql).then((result)=>{
 });
 
 emitter.on('songList',(urls)=>{
-    console.log(urls);
+    const length = urls.length;
+    let count = 0;
     let buildQueue = urls.map(val=>{
         return {
             uri:val,
             callback:(err,res,done)=>{
                 if(err) console.error(['爬去页面信息失败！',err]),exit(1);
                 doSql(getSql(res.$),val);
+                count++;
+                if(count===length){
+                    emitter.emit('over');
+                }
+                done();
             }
         }
     })
     crawler.queue(buildQueue);
+})
+
+emitter.on('over',()=>{
+    if(!errorUri.length) console.log('listSongSheet over task'),process.exit(1);
+    let time = (new Date()).getTime();
+    let fileName = time+'-playlist-init';
+    fileName = path.resolve(config.errorDir,fileName)
+    fs.writeFile(JSON.stringify(errorUri),fileName,'utf-8',function(err){
+        if(err) console.log('写入文件报错!'+error);
+        console.log('错误文件：'+fileName),process.exit(1);
+    })
 })
 
 function createNewUrls(urls){
@@ -100,5 +124,8 @@ function getSql($) {
 function doSql(sql,val) {
     query(sql).then(function(results){
         console.log('爬去页面：'+val);
+    }).catch(err=>{
+        console.error(['数据查询报错！','sql-->'+sql,'err-->'+err]);
+        errorUri.push(val);
     })
 }
