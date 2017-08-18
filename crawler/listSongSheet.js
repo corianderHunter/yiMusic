@@ -36,10 +36,8 @@ query(sql).then((result)=>{
             sourceId:val.sourceId
         };
     })
-}).catch(err=>{
-    console.error(['数据查询报错！','sql-->'+sql,'err-->'+err]);
-    process.exit(1);
 }).then(urls=>{
+    if(!urls.length) return;
     let count = 0;
     let urls_new = urls.map((val,idx)=>{
         return {
@@ -62,6 +60,9 @@ query(sql).then((result)=>{
         }
     })
     crawler.queue(urls_new);
+}).catch(err=>{
+    console.error(['数据查询报错！','sql-->'+sql,'err-->'+err]);
+    process.exit(1);
 });
 
 emitter.on('songList',(urls)=>{
@@ -71,7 +72,7 @@ emitter.on('songList',(urls)=>{
         return {
             uri:val,
             callback:(err,res,done)=>{
-                if(err) console.error(['爬去页面信息失败！',err]),exit(1);
+                if(err) return console.error(['爬去页面信息失败！',err]);
                 doSql(getSql(res.$),val);
                 count++;
                 if(count===length){
@@ -85,13 +86,13 @@ emitter.on('songList',(urls)=>{
 })
 
 emitter.on('over',()=>{
-    if(!errorUri.length) console.log('listSongSheet over task'),process.exit(1);
+    if(!errorUri.length) console.log('listSongSheet over task'),connect.destroy(),process.exit(1);
     let time = (new Date()).getTime();
     let fileName = time+'-playlist-init';
     fileName = path.resolve(config.errorDir,fileName)
-    fs.writeFile(JSON.stringify(errorUri),fileName,'utf-8',function(err){
+    fs.writeFile(fileName,JSON.stringify(errorUri),'utf-8',function(err){
         if(err) console.log('写入文件报错!'+error);
-        console.log('错误文件：'+fileName),process.exit(1);
+        console.log('记录sql报错的页面集合：'+fileName),process.exit(1);
     })
 })
 
@@ -114,7 +115,7 @@ function getSql($) {
         let that = $doms.eq(idx);
         imgUrl = that.children('img').attr('src');
         name = that.children('a').attr('title');
-        name = name.replace(/\"/g,'');
+        name = name.replace(/\"/g,'').replace(/\\/g,'').replace(/\//g,'');
         sourceId = that.children('.bottom').children('a').attr('data-res-id');
         sql += `("${sourceId}","${name}","${imgUrl}"),`;
     });
