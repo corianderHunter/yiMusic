@@ -71,8 +71,8 @@ function main(times,resolve,reject){
                     })).then(()=>{
                         count++;
                         if(count===1000) resolve();
-                    }).catch(()=>{
-                        reject();
+                    }).catch((err)=>{
+                        reject(err);
                     })
                     done()
                 }
@@ -103,7 +103,7 @@ function doSql_songSheet($,sId,resolve,reject){
     tag = tag_arr.toString();
     desciption = $('#album-desc-more').text();
     desciption = Strings.formatSQLString(desciption);
-    collectCount = $('#content-operation .u-btni-fav i').attr('data-count')-0;
+    collectCount = $('#content-operation .u-btni-fav').attr('data-count')-0;
     shareCount = $('#content-operation .u-btni-share i').attr('data-count');
     shareCount = shareCount.slice(1,-1)-0;
     playCount = $('#play-count').text() - 0;
@@ -117,7 +117,7 @@ function doSql_songSheet($,sId,resolve,reject){
     }).catch(err=>{
         logger.system().error(`database 错误：录入歌单${config.songSheet(sId)}报错！`);
         logger.system().error(err);
-        reject();
+        reject(err);
     })
 
 }
@@ -140,26 +140,29 @@ function doSql_common($,sId,resolve,reject){
         doSql_singer(sId,songs,resolve,reject);
     })]).then(()=>{
         resolve();
-    }).catch(()=>{
-        reject();
+    }).catch((err)=>{
+        reject(err);
     })
 
 }
 
 function doSql_song(sId,songs,resolve,reject) {
-    let sourceId,name,singer,album,duration,mvid,score;
+    let sourceId,name,singer='',album,duration,mvid,score;
     let sql = `insert ignore into song (sourceId,name,singer,album,duration,mvid,score) values `;
     songs.forEach(val=>{
-        val.artists.length?singer = val.artists.reduce(function(sum,value){
-            return sum.name||''+','+value.name||'';
-        }):''
+        for(let i = 0;i<val.artists.length;i++){
+            singer += val.artists[i].name+',';
+        }
+        singer = singer.slice(0,-1);
+        singer = Strings.formatSQLString(singer||'');
+        name = Strings.formatSQLString(val.name||'');
         sql += `("${val.id||""}","${val.name||""}","${singer}","${val.album.id||""}",${val.duration||0},${val.mvid||0},${val.score||null}),`
     })
     sql = sql.slice(0,-1);
     query(sql).then(()=>{
         resolve();
     }).catch(function(err){
-        reject();
+        reject(err);
         logger.system().error('歌单'+config.songSheet(sId)+'内 录入歌曲数据 报错！');
         logger.system().error(err);
     })
@@ -177,7 +180,7 @@ function doSql_singer(sId,songs,resolve,reject){
     query(sql).then(()=>{
         resolve();
     }).catch((err)=>{
-        reject();
+        reject(err);
         logger.system().error('歌单'+config.songSheet(sId)+'内 录入歌手数据 报错！');
         logger.system().error(err);
     })
@@ -186,16 +189,16 @@ function doSql_singer(sId,songs,resolve,reject){
 
 function doSql_album(sId,songs,resolve,reject){
     let sourceId,name,pic,picUrl,tns;
-    let sql = `insert ingore into album (sourceId,name,pic,picUrl,tns) values `;
+    let sql = `insert ignore into album (sourceId,name,pic,picUrl,tns) values `;
     songs.forEach(val_=>{
-        let val = val_.abulm||{};
+        let val = val_.album||{};
         sql += `("${val.id||""}","${val.name||""}","${val.pic||""}","${val.picUrl||""}","${val.tns.toString()}"),`
     })
     sql = sql.slice(0,-1)
     query(sql).then(()=>{
         resolve();
-    }).catch(()=>{
-        reject();
+    }).catch((err)=>{
+        reject(err);
         logger.system().error('歌单'+config.songSheet(sId)+'内 录入专辑数据 报错！');
         logger.system().error(err);
     })
