@@ -4,7 +4,7 @@
 
 let Strings = {
     formatSQLString(str){
-        return str.replace(/\"/g,'').replace(/\\/g,'').replace(/\//g,'');
+        return str.replace(/\"/g,'').replace(/\'/g,'').replace(/\\/g,'').replace(/\//g,'');
     }
 }
 

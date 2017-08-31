@@ -6,6 +6,6 @@ const playList = (sourceId,offset=0,limit = 35)=>{
 }
 
 const songSheet = sourceId =>{
-    return `http://music.163.com/#/playlist?id=${sourceId}`
+    return `http://music.163.com/playlist?id=${sourceId}`
 }
 module.exports = {listUrl,playList,songSheet};
