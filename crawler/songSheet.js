@@ -104,12 +104,11 @@ function doSql_songSheet($,sId,resolve,reject){
     desciption = $('#album-desc-more').text();
     desciption = Strings.formatSQLString(desciption);
     collectCount = $('#content-operation .u-btni-fav').attr('data-count')-0;
-    shareCount = $('#content-operation .u-btni-share i').attr('data-count');
-    shareCount = shareCount.slice(1,-1)-0;
+    shareCount = $('#content-operation .u-btni-share').attr('data-count')-0;
     playCount = $('#play-count').text() - 0;
     commentCount = $('#cnt_comment_count').text()-0;
 
-    sql += `update playlist set author="${author}",ctime="${ctime}",imgUrl="${imgUrl}",tag="${tag}",description="${desciption}",collectCount="${collectCount}",
+    sql = `update playlist set author="${author}",ctime="${ctime}",imgUrl="${imgUrl}",tag="${tag}",description="${desciption}",collectCount="${collectCount}",
         shareCount=${shareCount||0},playCount=${playCount||0},commentCount=${commentCount||0} where sourceId="${sId}"`
 
     query(sql).then(result=>{
@@ -156,11 +155,11 @@ function doSql_song(sId,songs,resolve,reject) {
         singer = singer.slice(0,-1);
         singer = Strings.formatSQLString(singer||'');
         name = Strings.formatSQLString(val.name||'');
-        sql += `("${val.id||""}","${val.name||""}","${singer}","${val.album.id||""}",${val.duration||0},${val.mvid||0},${val.score||null}),`
+        sql += `("${val.id||""}","${name||""}","${singer}","${val.album.id||""}",${val.duration||0},${val.mvid||0},${val.score||null}),`
     })
     sql = sql.slice(0,-1);
-    query(sql).then(()=>{
-        resolve();
+    query(sql).then((result)=>{
+        resolve(result);
     }).catch(function(err){
         reject(err);
         logger.system().error('歌单'+config.songSheet(sId)+'内 录入歌曲数据 报错！');
@@ -192,7 +191,9 @@ function doSql_album(sId,songs,resolve,reject){
     let sql = `insert ignore into album (sourceId,name,pic,picUrl,tns) values `;
     songs.forEach(val_=>{
         let val = val_.album||{};
-        sql += `("${val.id||""}","${val.name||""}","${val.pic||""}","${val.picUrl||""}","${val.tns.toString()}"),`
+        name = Strings.formatSQLString(val.name)||'';
+        tns = Strings.formatSQLString(val.tns.toString())||'';
+        sql += `("${val.id||""}","${val.name||""}","${val.pic||""}","${val.picUrl||""}","${}"),`
     })
     sql = sql.slice(0,-1)
     query(sql).then(()=>{
